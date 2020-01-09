@@ -1,16 +1,9 @@
-import reducer from 'reducers'
-import { UPSERT_TRANSACTIONS, UPSERT_TRANSACTION } from 'reducers/transactions'
+import reducer, { INITIAL_STATE } from '../../src/reducers'
 
 describe('reducers/transactions', () => {
-  it('should return the initial state', () => {
-    const state = reducer(undefined, {})
-
-    expect(state.transactions).toEqual({ items: {} })
-  })
-
   it('UPSERT_TRANSACTIONS upserts items', () => {
     const action = {
-      type: UPSERT_TRANSACTIONS,
+      type: 'UPSERT_TRANSACTIONS',
       data: {
         transactions: {
           a: { id: 'a' },
@@ -24,7 +17,7 @@ describe('reducers/transactions', () => {
         },
       },
     }
-    const state = reducer(undefined, action)
+    const state = reducer(INITIAL_STATE, action)
 
     expect(state.transactions.items).toEqual({
       a: { id: 'a' },
@@ -34,14 +27,14 @@ describe('reducers/transactions', () => {
 
   it('UPSERT_TRANSACTION upserts items', () => {
     const action = {
-      type: UPSERT_TRANSACTION,
+      type: 'UPSERT_TRANSACTION',
       data: {
         transactions: {
           a: { id: 'a' },
         },
       },
     }
-    const state = reducer(undefined, action)
+    const state = reducer(INITIAL_STATE, action)
 
     expect(state.transactions.items).toEqual({ a: { id: 'a' } })
   })

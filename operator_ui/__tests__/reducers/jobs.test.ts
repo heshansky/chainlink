@@ -1,26 +1,9 @@
-import reducer from 'reducers'
-import {
-  UPSERT_JOBS,
-  UPSERT_RECENTLY_CREATED_JOBS,
-  UPSERT_JOB,
-} from 'reducers/jobs'
-import { RECEIVE_DELETE_SUCCESS } from 'actions'
+import reducer, { INITIAL_STATE } from '../../src/reducers'
 
 describe('reducers/jobs', () => {
-  it('should return the initial state', () => {
-    const state = reducer(undefined, {})
-
-    expect(state.jobs).toEqual({
-      items: {},
-      currentPage: null,
-      recentlyCreated: null,
-      count: 0,
-    })
-  })
-
   it('UPSERT_JOBS upserts items along with the current page & count from meta', () => {
     const action = {
-      type: UPSERT_JOBS,
+      type: 'UPSERT_JOBS',
       data: {
         specs: {
           a: { id: 'a' },
@@ -36,7 +19,7 @@ describe('reducers/jobs', () => {
         },
       },
     }
-    const state = reducer(undefined, action)
+    const state = reducer(INITIAL_STATE, action)
 
     expect(state.jobs.items).toEqual({
       a: { id: 'a' },
@@ -48,7 +31,7 @@ describe('reducers/jobs', () => {
 
   it('UPSERT_RECENTLY_CREATED_JOBS upserts items along with the current page & count from meta', () => {
     const action = {
-      type: UPSERT_RECENTLY_CREATED_JOBS,
+      type: 'UPSERT_RECENTLY_CREATED_JOBS',
       data: {
         specs: {
           c: { id: 'c' },
@@ -61,7 +44,7 @@ describe('reducers/jobs', () => {
         },
       },
     }
-    const state = reducer(undefined, action)
+    const state = reducer(INITIAL_STATE, action)
 
     expect(state.jobs.items).toEqual({
       c: { id: 'c' },
@@ -72,29 +55,31 @@ describe('reducers/jobs', () => {
 
   it('UPSERT_JOB upserts items', () => {
     const action = {
-      type: UPSERT_JOB,
+      type: 'UPSERT_JOB',
       data: {
         specs: {
           a: { id: 'a' },
         },
       },
     }
-    const state = reducer(undefined, action)
+    const state = reducer(INITIAL_STATE, action)
 
     expect(state.jobs.items).toEqual({ a: { id: 'a' } })
   })
 
   it('RECEIVE_DELETE_SUCCESS deletes items', () => {
-    const upsertAction = {
-      type: UPSERT_JOB,
-      data: { specs: { b: { id: 'b' } } },
-    }
-    const preDeleteState = reducer(undefined, upsertAction)
-    expect(preDeleteState.jobs.items).toEqual({ b: { id: 'b' } })
     const deleteAction = {
-      type: RECEIVE_DELETE_SUCCESS,
+      type: 'RECEIVE_DELETE_SUCCESS',
       id: 'b',
     }
+    const upsertAction = {
+      type: 'UPSERT_JOB',
+      data: { specs: { b: { id: 'b' } } },
+    }
+
+    const preDeleteState = reducer(INITIAL_STATE, upsertAction)
+    expect(preDeleteState.jobs.items).toEqual({ b: { id: 'b' } })
+
     const postDeleteState = reducer(preDeleteState, deleteAction)
     expect(postDeleteState.jobs.items).toEqual({})
   })
