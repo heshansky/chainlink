@@ -206,6 +206,7 @@ type pollingDeviationCheckerFactory struct{}
 
 func (f pollingDeviationCheckerFactory) New(initr models.Initiator, runManager RunManager) (DeviationChecker, error) {
 	fetcher, err := newMedianFetcherFromURLs(
+		initr.JobSpecID,
 		defaultHTTPTimeout,
 		initr.InitiatorParams.RequestData.String(),
 		initr.InitiatorParams.Feeds...)

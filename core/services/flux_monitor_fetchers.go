@@ -2,6 +2,7 @@ package services
 
 import (
 	"chainlink/core/logger"
+	"chainlink/core/store/models"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/guregu/null"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/shopspring/decimal"
 	"go.uber.org/multierr"
@@ -33,6 +35,7 @@ type httpFetcher struct {
 }
 
 func newHTTPFetcher(
+	jobSpecID *models.ID,
 	timeout time.Duration,
 	requestData,
 	urlStr string,
@@ -43,8 +46,14 @@ func newHTTPFetcher(
 	}
 
 	client := &http.Client{Timeout: timeout, Transport: http.DefaultTransport}
-	client.Transport = promhttp.InstrumentRoundTripperDuration(promFMResponseTime, client.Transport)
-	client.Transport = instrumentRoundTripperReponseSize(promFMResponseSize, client.Transport)
+	client.Transport = promhttp.InstrumentRoundTripperDuration(
+		promFMResponseTime.MustCurryWith(prometheus.Labels{"job_spec_id": jobSpecID.String()}),
+		client.Transport,
+	)
+	client.Transport = instrumentRoundTripperReponseSize(
+		promFMResponseSize.With(prometheus.Labels{"job_spec_id": jobSpecID.String()}),
+		client.Transport,
+	)
 
 	return &httpFetcher{
 		client:      client,
@@ -111,13 +120,14 @@ type medianFetcher struct {
 // newMedianFetcherFromURLs creates a median fetcher that retrieves a price
 // from all passed URLs using httpFetcher, and returns the median.
 func newMedianFetcherFromURLs(
+	jobSpecID *models.ID,
 	timeout time.Duration,
 	requestData string,
 	priceURLs ...string,
 ) (Fetcher, error) {
 	fetchers := []Fetcher{}
 	for _, url := range priceURLs {
-		ps, err := newHTTPFetcher(timeout, requestData, url)
+		ps, err := newHTTPFetcher(jobSpecID, timeout, requestData, url)
 		if err != nil {
 			return nil, err
 		}

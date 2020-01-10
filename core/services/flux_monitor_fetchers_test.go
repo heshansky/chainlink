@@ -1,6 +1,7 @@
 package services
 
 import (
+	"chainlink/core/store/models"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -60,7 +61,7 @@ func TestNewMedianFetcherFromURLs_Happy(t *testing.T) {
 				urls = append(urls, s.URL)
 			}
 
-			medianFetcher, err := newMedianFetcherFromURLs(defaultHTTPTimeout, ethUSDPairing, urls...)
+			medianFetcher, err := newMedianFetcherFromURLs(models.NewID(), defaultHTTPTimeout, ethUSDPairing, urls...)
 			require.NoError(t, err)
 
 			medianPrice, err := medianFetcher.Fetch()
@@ -74,7 +75,7 @@ func TestNewMedianFetcherFromURLs_Error(t *testing.T) {
 	s1 := httptest.NewServer(fakePriceResponder(t, ethUSDPairing, decimal.NewFromInt(101)))
 	defer s1.Close()
 
-	_, err := newMedianFetcherFromURLs(defaultHTTPTimeout, ethUSDPairing, s1.URL, "garbage")
+	_, err := newMedianFetcherFromURLs(models.NewID(), defaultHTTPTimeout, ethUSDPairing, s1.URL, "garbage")
 	require.Error(t, err)
 }
 
@@ -83,7 +84,7 @@ func TestHTTPFetcher_Happy(t *testing.T) {
 	s1 := httptest.NewServer(fakePriceResponder(t, btcUSDPairing, decimal.NewFromInt(9700)))
 	defer s1.Close()
 
-	fetcher, err := newHTTPFetcher(defaultHTTPTimeout, btcUSDPairing, s1.URL)
+	fetcher, err := newHTTPFetcher(models.NewID(), defaultHTTPTimeout, btcUSDPairing, s1.URL)
 	require.NoError(t, err)
 	price, err := fetcher.Fetch()
 	assert.NoError(t, err)
@@ -104,7 +105,7 @@ func TestHTTPFetcher_ErrorMessage(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	fetcher, err := newHTTPFetcher(defaultHTTPTimeout, ethUSDPairing, server.URL)
+	fetcher, err := newHTTPFetcher(models.NewID(), defaultHTTPTimeout, ethUSDPairing, server.URL)
 	require.NoError(t, err)
 	price, err := fetcher.Fetch()
 	assert.Error(t, err)
@@ -123,7 +124,7 @@ func TestHTTPFetcher_OnlyErrorMessage(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	fetcher, err := newHTTPFetcher(defaultHTTPTimeout, ethUSDPairing, server.URL)
+	fetcher, err := newHTTPFetcher(models.NewID(), defaultHTTPTimeout, ethUSDPairing, server.URL)
 	require.NoError(t, err)
 	price, err := fetcher.Fetch()
 	assert.Error(t, err)
@@ -141,7 +142,7 @@ func TestHTTPFetcher_NoResultNorErrorMessage(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	fetcher, err := newHTTPFetcher(defaultHTTPTimeout, ethUSDPairing, server.URL)
+	fetcher, err := newHTTPFetcher(models.NewID(), defaultHTTPTimeout, ethUSDPairing, server.URL)
 	require.NoError(t, err)
 	price, err := fetcher.Fetch()
 	assert.Error(t, err)

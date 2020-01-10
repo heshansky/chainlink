@@ -45,14 +45,14 @@ var (
 			Help:    "Flux monitor's histogram of request latencies",
 			Buckets: prometheus.DefBuckets,
 		},
-		[]string{},
+		[]string{"job_spec_id"},
 	)
-	promFMResponseSize = promauto.NewHistogram(
-		prometheus.HistogramOpts{
-			Name:    "flux_monitor_response_size_bytes",
-			Help:    "Flux monitor's last response body size",
-			Buckets: prometheus.DefBuckets,
+	promFMResponseSize = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "flux_monitor_response_size_bytes",
+			Help: "Flux monitor's last response body size",
 		},
+		[]string{"job_spec_id"},
 	)
 )
 
@@ -66,13 +66,13 @@ func promSetBigInt(gauge prometheus.Gauge, arg *big.Int) {
 }
 
 func instrumentRoundTripperReponseSize(
-	obs prometheus.Observer,
+	gauge prometheus.Gauge,
 	next http.RoundTripper,
 ) promhttp.RoundTripperFunc {
 	return promhttp.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 		resp, err := next.RoundTrip(r)
 		if err == nil && resp.ContentLength >= 0 {
-			obs.Observe(float64(resp.ContentLength))
+			gauge.Set(float64(resp.ContentLength))
 		}
 		return resp, err
 	})
