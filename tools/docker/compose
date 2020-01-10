@@ -29,7 +29,7 @@ Commands:
 
     cld                   Runs the chainlink node container in dev mode
     cldo                  cld in addition to operator-ui in dev mode
-    
+
     acceptance            Run the services required to perform an acceptance test
 
     test                  Run integration test suite
@@ -38,6 +38,10 @@ Commands:
     integration | i       Run docker-compose with config for integration tests
     dev:integration | di  Run docker-compose with dev config for integration tests
     dev                   Run docker-compose with dev config for the core node and operator-ui
+
+    eth:clean             Reset blockchain data to genesis state
+    cl:clean            Reset chainlink database
+
     *                     Run docker-compose with base config"
 
 case "$1" in
@@ -51,7 +55,7 @@ case "$1" in
     $deps down -v
     $dev_integration down -v
     ;;
-          
+
   cld)
     $dev build
     $dev up -d node
@@ -91,6 +95,19 @@ case "$1" in
   dev)
     $dev ${@:2}
     ;;
+
+  eth:clean)
+    $base rm --stop --force devnet
+    $base up -d devnet
+    ;;
+  cl:clean)
+    node_running=`docker ps -q --no-trunc | grep $(docker-compose ps -q node)`
+    if [ $node_running ]; then $base stop node; fi
+    $base exec node-db dropdb -U postgres node_dev
+    $base exec node-db createdb -U postgres node_dev
+    if [ $node_running ]; then $base up -d node; fi
+    ;;
+
   *)
     $base $@
     ;;
